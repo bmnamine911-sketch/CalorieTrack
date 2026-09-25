@@ -1,0 +1,39 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get project
+        uses: actions/checkout@v4
+
+      - name: Unzip Android project
+        run: |
+          unzip -q CalorieTrack-Android-Project.zip -d extracted
+          echo "Files:"
+          find extracted -name gradlew -type f
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build APK
+        run: |
+          ROOT=$(find extracted -name gradlew -type f -print -quit | xargs dirname)
+          chmod +x "$ROOT/gradlew"
+          cd "$ROOT"
+          ./gradlew assembleDebug
+
+      - name: Save APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CalorieTrack-APK
+          path: extracted/**/build/outputs/apk/debug/*.apk
